@@ -1,0 +1,17 @@
+{
+  "files": {
+    "main.css": "/DineOut/static/css/main.f855e6bc.css",
+    "main.js": "/DineOut/static/js/main.b6a733d5.js",
+    "static/js/563.cf539b79.chunk.js": "/DineOut/static/js/563.cf539b79.chunk.js",
+    "static/media/art_bg.png": "/DineOut/static/media/art_bg.9838623ddbe7b6e31aa0.png",
+    "static/media/logo.svg": "/DineOut/static/media/logo.6ce24c58023cc2f8fd88fe9d219db6c6.svg",
+    "index.html": "/DineOut/index.html",
+    "main.f855e6bc.css.map": "/DineOut/static/css/main.f855e6bc.css.map",
+    "main.b6a733d5.js.map": "/DineOut/static/js/main.b6a733d5.js.map",
+    "563.cf539b79.chunk.js.map": "/DineOut/static/js/563.cf539b79.chunk.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.f855e6bc.css",
+    "static/js/main.b6a733d5.js"
+  ]
+}
