@@ -1,18 +1,18 @@
 {
   "files": {
-    "main.css": "/DineOut/static/css/main.f855e6bc.css",
-    "main.js": "/DineOut/static/js/main.2b0fd8d5.js",
+    "main.css": "/DineOut/static/css/main.78fb54b7.css",
+    "main.js": "/DineOut/static/js/main.ca0a8971.js",
     "static/js/563.cf539b79.chunk.js": "/DineOut/static/js/563.cf539b79.chunk.js",
-    "static/media/art_bg.png": "/DineOut/static/media/art_bg.9838623ddbe7b6e31aa0.png",
+    "static/media/pizza_new.png": "/DineOut/static/media/pizza_new.8e263f495c663dc54a71.png",
     "static/media/burger_photo.png": "/DineOut/static/media/burger_photo.e92b468a4fd6f4f46d6b.png",
     "static/media/pizza_photo.png": "/DineOut/static/media/pizza_photo.23b0b2392a0c435a7b8e.png",
     "index.html": "/DineOut/index.html",
-    "main.f855e6bc.css.map": "/DineOut/static/css/main.f855e6bc.css.map",
-    "main.2b0fd8d5.js.map": "/DineOut/static/js/main.2b0fd8d5.js.map",
+    "main.78fb54b7.css.map": "/DineOut/static/css/main.78fb54b7.css.map",
+    "main.ca0a8971.js.map": "/DineOut/static/js/main.ca0a8971.js.map",
     "563.cf539b79.chunk.js.map": "/DineOut/static/js/563.cf539b79.chunk.js.map"
   },
   "entrypoints": [
-    "static/css/main.f855e6bc.css",
-    "static/js/main.2b0fd8d5.js"
+    "static/css/main.78fb54b7.css",
+    "static/js/main.ca0a8971.js"
   ]
 }
