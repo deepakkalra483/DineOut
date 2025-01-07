@@ -1,20 +1,21 @@
 {
   "files": {
-    "main.css": "/DineOut/static/css/main.5956ff0d.css",
-    "main.js": "/DineOut/static/js/main.0d36492e.js",
+    "main.css": "/DineOut/static/css/main.93bcbd9d.css",
+    "main.js": "/DineOut/static/js/main.e30bef2e.js",
     "static/js/563.cf539b79.chunk.js": "/DineOut/static/js/563.cf539b79.chunk.js",
     "static/media/art_bg.png": "/DineOut/static/media/art_bg.9838623ddbe7b6e31aa0.png",
-    "static/media/momos.png": "/DineOut/static/media/momos.82525a23ebac33540340.png",
-    "static/media/pizza_new.png": "/DineOut/static/media/pizza_new.8e263f495c663dc54a71.png",
+    "static/media/family_meal.jpg": "/DineOut/static/media/family_meal.d4d6eff48d4e614704aa.jpg",
+    "static/media/burger_combo.jpg": "/DineOut/static/media/burger_combo.83326ca2c6de17c58989.jpg",
     "static/media/burger_photo.png": "/DineOut/static/media/burger_photo.e92b468a4fd6f4f46d6b.png",
-    "static/media/pizza_photo.png": "/DineOut/static/media/pizza_photo.23b0b2392a0c435a7b8e.png",
+    "static/media/pizza_combo.jpg": "/DineOut/static/media/pizza_combo.b19555e46eb5c58b2ca6.jpg",
+    "static/media/salad.jpg": "/DineOut/static/media/salad.bcb1d12bf5d4bceceb3a.jpg",
     "index.html": "/DineOut/index.html",
-    "main.5956ff0d.css.map": "/DineOut/static/css/main.5956ff0d.css.map",
-    "main.0d36492e.js.map": "/DineOut/static/js/main.0d36492e.js.map",
+    "main.93bcbd9d.css.map": "/DineOut/static/css/main.93bcbd9d.css.map",
+    "main.e30bef2e.js.map": "/DineOut/static/js/main.e30bef2e.js.map",
     "563.cf539b79.chunk.js.map": "/DineOut/static/js/563.cf539b79.chunk.js.map"
   },
   "entrypoints": [
-    "static/css/main.5956ff0d.css",
-    "static/js/main.0d36492e.js"
+    "static/css/main.93bcbd9d.css",
+    "static/js/main.e30bef2e.js"
   ]
 }
