@@ -7,8 +7,9 @@ import "./utils/AppCss.css";
 import { MenuItems, specialOffers } from "./utils/StaticArray";
 import { addData, addOrder, clearDatabase, getAllData } from "./utils/IndexDB";
 import NewDesign from "./components/NewDesign";
-import { AddToCart, getCartDetails } from "./utils/LocalStorageHelper";
+import { AddMore, AddToCart, getCartDetails } from "./utils/LocalStorageHelper";
 
+let MenuList = [];
 function App() {
   const [isOpen, setIsOpen] = useState(false);
   const [activeFilter, setActive] = useState("All");
@@ -23,6 +24,8 @@ function App() {
     const stringifyData = JSON.stringify(data);
     localStorage.setItem(name, stringifyData);
     UpdateFilters(data);
+    setItems(data);
+    MenuList = data;
     setLoading(false);
   };
 
@@ -31,6 +34,7 @@ function App() {
     if (data) {
       console.log("alredyPresnet");
       const ParsedData = JSON.parse(data);
+      MenuList = ParsedData;
       setItems(ParsedData);
       UpdateFilters(ParsedData);
       setLoading(false);
@@ -73,34 +77,33 @@ function App() {
   };
 
   const filterItems = (category) => {
-    const filterMenu = allItems.filter((item) => item?.category === category);
+    console.log("allItems--", JSON.stringify(allItems));
+    const filterMenu = MenuList.filter((item) => item?.category === category);
     if (filterMenu?.length > 0) {
       setItems(filterMenu);
     } else {
-      setItems(allItems);
+      setItems(MenuList);
     }
   };
 
   const searchItems = (query) => {
     const lowerQuery = query.toLowerCase(); // Ensure the query is lowercase for comparison
-    const filterMenu = allItems
-      .map((menu) => {
-        // Filter items within the category where the item name matches the query
-        const filteredItems = menu.items.filter((item) =>
-          item.name?.toLowerCase().includes(lowerQuery)
-        );
+    const filterMenu = MenuList.map((menu) => {
+      // Filter items within the category where the item name matches the query
+      const filteredItems = menu.items.filter((item) =>
+        item.name?.toLowerCase().includes(lowerQuery)
+      );
 
-        // Only return the category if it has matching items or the category name matches the query
-        if (
-          filteredItems.length > 0 ||
-          menu.category?.toLowerCase().includes(lowerQuery)
-        ) {
-          return { ...menu, items: filteredItems }; // Return category with filtered items
-        }
+      // Only return the category if it has matching items or the category name matches the query
+      if (
+        filteredItems.length > 0 ||
+        menu.category?.toLowerCase().includes(lowerQuery)
+      ) {
+        return { ...menu, items: filteredItems }; // Return category with filtered items
+      }
 
-        return null; // Return null if no matching items or category name
-      })
-      .filter((menu) => menu !== null); // Remove any null categories
+      return null; // Return null if no matching items or category name
+    }).filter((menu) => menu !== null); // Remove any null categories
 
     if (filterMenu.length > 0) {
       setItems(filterMenu); // Update state with the filtered menu
@@ -110,14 +113,46 @@ function App() {
   };
 
   const AddItem = (item) => {
-    const index = orders.findIndex((prevItem) => prevItem?.id === item?.id);
-    item = { qty: 1, ...item };
-    if (index === -1) {
-      setOrders((prevItem) => {
-        return [...prevItem, item];
+    setOrders((prevOrders) => {
+      const index = prevOrders.findIndex(
+        (prevItem) => prevItem?.id === item?.id
+      );
+      if (index === -1) {
+        // If the item is not found, add it with qty: 1
+        const newItem = { qty: 1, ...item };
+        AddToCart(details?.resturant + details?.table, newItem);
+        return [...prevOrders, newItem];
+      } else {
+        const newItem = item;
+        const updatedOrders = prevOrders.map((item) => {
+          if (item.id === newItem.id) {
+            console.log("found", item);
+            return { ...item, qty: item.qty + 1 };
+          }
+          return item;
+        });
+        // AddToCart(details?.resturant + details?.table, updatedOrders[index]);
+        return updatedOrders;
+      }
+    });
+  };
+
+  const removeItem = (newItem) => {
+    setOrders((prevOrder) => {
+      const updatedOrders = prevOrder.map((item) => {
+        if (item.id === newItem.id) {
+          console.log("found", item);
+          if (item?.qty > 1) {
+            return { ...item, qty: item.qty - 1 };
+          } else {
+            return null;
+          }
+        }
+        return item;
       });
-    }
-    AddToCart(details?.resturant + details?.table, item);
+      // AddToCart(details?.resturant + details?.table, updatedOrders[index]);
+      return updatedOrders;
+    });
   };
 
   const [searchText, setSearchText] = useState("");
@@ -344,25 +379,29 @@ function App() {
                     scrollbarWidth: "none",
                   }}
                 >
-                  {mainItem?.items.map((item) =>
-                    item?.description ? (
+                  {mainItem?.items.map((item) => {
+                    const orderDetails = orders.find(
+                      (orderItem) => orderItem?.id === item?.id
+                    );
+
+                    return item?.description ? (
                       <OfferPoster item={item} />
                     ) : (
                       <MenuItem
-                        ordered={orders.some(
-                          (orderItem) => orderItem?.id === item?.id
-                        )}
+                        ordered={!!orderDetails}
+                        qty={orderDetails?.qty || 1}
                         src={
                           mainItem?.category === "Burgers"
                             ? require("./assets/images/backgrounds/burger_photo.png")
                             : require("./assets/images/backgrounds/pizza_combo.jpg")
                         }
                         onClick={() => AddItem(item)}
-                        add={() => console.log("+")}
+                        remove={() => removeItem(item)}
+                        add={() => AddItem(item)}
                         item={item}
                       />
-                    )
-                  )}
+                    );
+                  })}
                 </div>
               </div>
             ))}
@@ -417,18 +456,18 @@ function App() {
       {isOpen && (
         <div className="popup">
           <div className="popup-header">
-            <h3 style={{color:'#000',fontSize:14}}>Your order</h3>
+            <h3 style={{ color: "#000", fontSize: 14 }}>Your order</h3>
             <button className="close-btn" onClick={togglePopup}>
               ×
             </button>
           </div>
           <div className="popup-content">
-          <h3 style={{color:'#3B3B3B',fontSize:12}}>{`Total Items: ${orders?.length}`}</h3>
-             {orders.map((item)=>(
-              <OrderCell item={item}/>
-             ))
-
-             }
+            <h3
+              style={{ color: "#3B3B3B", fontSize: 12 }}
+            >{`Total Items: ${orders?.length}`}</h3>
+            {orders.map((item) => (
+              <OrderCell item={item} />
+            ))}
             <button className="place-order-btn">Place Order</button>
           </div>
         </div>
@@ -695,7 +734,9 @@ const MenuItem = (props) => {
             >
               -
             </button>
-            <span style={{ color: AppColors.DARK_GREEN_TEXT }}>{item.qty}</span>
+            <span style={{ color: AppColors.DARK_GREEN_TEXT }}>
+              {props?.qty}
+            </span>
             <button onClick={props?.add}>+</button>
           </div>
         ) : (
