@@ -24,19 +24,31 @@ const OrderCell = (props) => {
   return (
     <div style={containerStyle}>
       <div style={itemStyle}>
-        <img style={imageStyle} src={item.src || require('../assets/images/backgrounds/momos.png')} alt={item.name} />
+        <img
+          style={imageStyle}
+          src={item.src || require("../assets/images/backgrounds/momos.png")}
+          alt={item.name}
+        />
         <div style={detailsStyle}>
           <p style={nameStyle}>{item.name}</p>
           <p style={descriptionStyle}>{item.description}</p>
           <p style={priceStyle}>RS {item.price}</p>
         </div>
         <div style={quantityControlsStyle}>
-          <button style={decreaseButtonStyle}>-</button>
+          <button onClick={props?.remove} style={decreaseButtonStyle}>
+            -
+          </button>
           <button style={buttonStyle}>{item.qty}</button>
-          <button style={increaseButtonStyle}>+</button>
+          <button onClick={props?.add} style={increaseButtonStyle}>
+            +
+          </button>
         </div>
-        <button style={deleteButtonStyle}>
-          <img style={deleteIconStyle} src={require('../assets/images/icons/delete_icon.png')} alt="delete" />
+        <button onClick={props?.onDelete} style={deleteButtonStyle}>
+          <img
+            style={deleteIconStyle}
+            src={require("../assets/images/icons/delete_icon.png")}
+            alt="delete"
+          />
         </button>
       </div>
     </div>
@@ -53,13 +65,13 @@ const containerStyle = {
 const itemStyle = {
   display: "flex",
   alignItems: "center",
-  padding: "10px" ,
+  padding: "10px",
   backgroundColor: "white",
   // height: "30px",
   justifyContent: "space-between",
   borderRadius: "15px",
   boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
-  marginBottom:10
+  marginBottom: 10,
 };
 
 const imageStyle = {
@@ -79,7 +91,7 @@ const nameStyle = {
   color: "black",
   fontSize: "12px",
   margin: "0",
-  fontWeight:"600"
+  fontWeight: "600",
 };
 
 const descriptionStyle = {
@@ -90,10 +102,10 @@ const descriptionStyle = {
 };
 
 const priceStyle = {
-    color: "black",
-    fontSize: "12px",
-    margin: "0",
-    // fontWeight:"600"
+  color: "black",
+  fontSize: "12px",
+  margin: "0",
+  // fontWeight:"600"
 };
 
 const quantityControlsStyle = {
@@ -106,16 +118,15 @@ const buttonStyle = {
   backgroundColor: "#fafafa",
   padding: "3px 8px",
   border: "none",
-  cursor: "pointer",    // Border color
+  cursor: "pointer", // Border color
   // borderWidth: 2,          // Border width
   borderRadius: 5,
-  
 };
 
 const decreaseButtonStyle = {
   ...buttonStyle,
   padding: "3px 10px",
-  backgroundColor: 'rgba(0, 68, 34, 0.3)',
+  backgroundColor: "rgba(0, 68, 34, 0.3)",
 };
 
 const increaseButtonStyle = {
@@ -135,8 +146,8 @@ const deleteButtonStyle = {
   justifyContent: "center",
   alignItems: "center",
   cursor: "pointer",
-  marginRight:'-10px',
-  border: 'none',
+  marginRight: "-10px",
+  border: "none",
 };
 
 const deleteIconStyle = {

@@ -5,11 +5,10 @@
   "private": true,
   "dependencies": {
     "cra-template": "1.2.0",
+    "firebase": "^11.1.0",
     "idb": "^8.0.1",
-    "motion": "^11.15.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
-    "react-modal-sheet": "^4.0.1",
     "react-scripts": "^5.0.1"
   },
   "scripts": {

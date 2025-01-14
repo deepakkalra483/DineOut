@@ -26,10 +26,29 @@ export const AddMore = (id, item) => {
     const existingItem = parsedData.find(
       (storedItem) => storedItem.id === item.id
     );
-
     if (existingItem) {
       // Increment the quantity
       existingItem.qty += 1;
+    } else {
+      // Add the new item with an initial quantity of 1
+      parsedData.push({ ...item, quantity: 1 });
+    }
+
+    // Save the updated data back to localStorage
+    localStorage.setItem(id, JSON.stringify(parsedData));
+  }
+};
+
+export const removeFromCart = (id, item) => {
+  const data = localStorage.getItem(id);
+  if (data) {
+    const parsedData = JSON.parse(data);
+    const existingItem = parsedData.find(
+      (storedItem) => storedItem.id === item.id
+    );
+    if (existingItem) {
+      // Increment the quantity
+      existingItem.qty -= 1;
     } else {
       // Add the new item with an initial quantity of 1
       parsedData.push({ ...item, quantity: 1 });

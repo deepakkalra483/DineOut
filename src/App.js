@@ -1,4 +1,3 @@
-import { Sheet } from "react-modal-sheet";
 import "./App.css";
 import OrderCell from "./components/OrderCell";
 import { AppColors } from "./utils/AppColors";
@@ -7,7 +6,10 @@ import "./utils/AppCss.css";
 import { MenuItems, specialOffers } from "./utils/StaticArray";
 import { addData, addOrder, clearDatabase, getAllData } from "./utils/IndexDB";
 import NewDesign from "./components/NewDesign";
-import { AddMore, AddToCart, getCartDetails } from "./utils/LocalStorageHelper";
+import { getCartDetails } from "./utils/LocalStorageHelper";
+import { ref, get } from "firebase/database";
+import { database } from "./utils/Firebase";
+import { getMenu } from "./networking/CallApi";
 
 let MenuList = [];
 function App() {
@@ -29,6 +31,34 @@ function App() {
     setLoading(false);
   };
 
+  const fetchRestaurantMenu = async (restaurantName) => {
+    const baseUrl = "http://localhost:3000"; // Replace with your backend base URL
+
+    try {
+      const response = await fetch(
+        `${baseUrl}/restaurants/${restaurantName}/menu`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`Error: ${response.status} ${response.statusText}`);
+      }
+      const menu = await response.json();
+      console.log("menu", JSON.stringify(menu));
+      AddMenu(restaurantName, menu);
+      // setItems(menu);
+      return menu;
+    } catch (error) {
+      console.error("Failed to fetch menu:", error);
+      throw error;
+    }
+  };
+
   const GetMenu = (name, menu) => {
     const data = localStorage.getItem(name);
     if (data) {
@@ -41,7 +71,7 @@ function App() {
     } else {
       localStorage.clear();
       console.log("notPresent");
-      AddMenu(name, menu);
+      fetchRestaurantMenu(name);
     }
   };
 
@@ -64,9 +94,8 @@ function App() {
       setOrders(ordersData);
     }
     console.log("localLenght-", localStorage.length);
-    // return
     GetMenu(resturant, MenuItems);
-  }, []);
+  }, [loading]);
 
   const togglePopup = () => {
     setIsOpen(!isOpen);
@@ -112,45 +141,44 @@ function App() {
     }
   };
 
+  const saveToLocalStorage = (orders) => {
+    localStorage.setItem(
+      details?.resturant + details?.table,
+      JSON.stringify(orders)
+    );
+  };
+
   const AddItem = (item) => {
     setOrders((prevOrders) => {
-      const index = prevOrders.findIndex(
-        (prevItem) => prevItem?.id === item?.id
-      );
-      if (index === -1) {
-        // If the item is not found, add it with qty: 1
-        const newItem = { qty: 1, ...item };
-        AddToCart(details?.resturant + details?.table, newItem);
-        return [...prevOrders, newItem];
-      } else {
-        const newItem = item;
-        const updatedOrders = prevOrders.map((item) => {
-          if (item.id === newItem.id) {
-            console.log("found", item);
-            return { ...item, qty: item.qty + 1 };
-          }
-          return item;
-        });
-        // AddToCart(details?.resturant + details?.table, updatedOrders[index]);
-        return updatedOrders;
-      }
+      const existingItem = prevOrders.find((order) => order.id === item.id);
+      const updatedOrders = existingItem
+        ? prevOrders.map((order) =>
+            order.id === item.id ? { ...order, qty: order.qty + 1 } : order
+          )
+        : [...prevOrders, { ...item, qty: 1 }];
+
+      saveToLocalStorage(updatedOrders); // Save to localStorage
+      return updatedOrders;
     });
   };
 
-  const removeItem = (newItem) => {
-    setOrders((prevOrder) => {
-      const updatedOrders = prevOrder.map((item) => {
-        if (item.id === newItem.id) {
-          console.log("found", item);
-          if (item?.qty > 1) {
-            return { ...item, qty: item.qty - 1 };
-          } else {
-            return null;
-          }
-        }
-        return item;
-      });
-      // AddToCart(details?.resturant + details?.table, updatedOrders[index]);
+  const removeItem = (item) => {
+    setOrders((prevOrders) => {
+      const updatedOrders = prevOrders
+        .map((order) =>
+          order.id === item.id ? { ...order, qty: order.qty - 1 } : order
+        )
+        .filter((order) => order.qty > 0); // Remove items with qty <= 0
+
+      saveToLocalStorage(updatedOrders); // Save to localStorage
+      return updatedOrders;
+    });
+  };
+
+  const deleteItem = (item) => {
+    setOrders((prevOrders) => {
+      const updatedOrders = prevOrders.filter((order) => order.id !== item?.id);
+      saveToLocalStorage(updatedOrders); // Save to localStorage
       return updatedOrders;
     });
   };
@@ -385,7 +413,14 @@ function App() {
                     );
 
                     return item?.description ? (
-                      <OfferPoster item={item} />
+                      <OfferPoster
+                        ordered={!!orderDetails}
+                        qty={orderDetails?.qty || 1}
+                        onClick={() => AddItem(item)}
+                        remove={() => removeItem(item)}
+                        add={() => AddItem(item)}
+                        item={item}
+                      />
                     ) : (
                       <MenuItem
                         ordered={!!orderDetails}
@@ -438,7 +473,10 @@ function App() {
                 className="cart-image"
               />
               <div className="cart-details">
-                <h4>{`${orders?.length} Items`}</h4>
+                <h4>{`${orders.reduce(
+                  (total, item) => total + item.qty,
+                  0
+                )} items`}</h4>
                 <p className="view-menu">You can add More</p>
               </div>
             </div>
@@ -464,9 +502,17 @@ function App() {
           <div className="popup-content">
             <h3
               style={{ color: "#3B3B3B", fontSize: 12 }}
-            >{`Total Items: ${orders?.length}`}</h3>
+            >{`Total Items: ${orders.reduce(
+              (total, item) => total + item.qty,
+              0
+            )}`}</h3>
             {orders.map((item) => (
-              <OrderCell item={item} />
+              <OrderCell
+                add={() => AddItem(item)}
+                remove={() => removeItem(item)}
+                onDelete={() => deleteItem(item)}
+                item={item}
+              />
             ))}
             <button className="place-order-btn">Place Order</button>
           </div>
@@ -751,6 +797,7 @@ const MenuItem = (props) => {
 
 const OfferPoster = (props) => {
   const item = props?.item;
+  const ordered = props?.ordered;
   return (
     <div
       className="offer-poster"
@@ -759,7 +806,30 @@ const OfferPoster = (props) => {
       <div className="offer-content">
         <h1 className="offer-title">{item?.name}</h1>
         <p className="offer-description">{item?.description}</p>
-        <button className="buy-now-btn">{`Add at ₹${item?.price}`}</button>
+        {ordered ? (
+          <div
+            style={{ justifyContent: "center", marginTop: 10 }}
+            className="quantity-controls"
+          >
+            <button
+              style={{
+                paddingInline: 6,
+                backgroundColor: "#fff",
+                color: "black",
+              }}
+              onClick={props?.remove}
+            >
+              -
+            </button>
+            <span style={{ color: "white" }}>{props?.qty}</span>
+            <button onClick={props?.add}>+</button>
+          </div>
+        ) : (
+          <button
+            onClick={props?.onClick}
+            className="buy-now-btn"
+          >{`Add at ₹${item?.price}`}</button>
+        )}
       </div>
     </div>
   );
