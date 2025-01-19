@@ -10,53 +10,55 @@ import { getCartDetails } from "./utils/LocalStorageHelper";
 import { ref, get } from "firebase/database";
 import { database } from "./utils/Firebase";
 import { getMenu } from "./networking/CallApi";
+import Lottie from "lottie-react";
+import orderPlace from "./assets/animations/order_Placed.json";
+import food_prepare from "./assets/animations/food_prepare.json";
 
 let MenuList = [];
+const messages = ["Spicy", "Medium", "Low"];
 function App() {
   const [isOpen, setIsOpen] = useState(false);
   const [activeFilter, setActive] = useState("All");
   const [orderList, setOrderList] = useState([]);
   const [allItems, setItems] = useState([]);
+  const [backupList, setBackup] = useState([]);
   const [filters, setFilters] = useState(["All"]);
   const [orders, setOrders] = useState([]);
+  const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(false);
   const [details, setDetails] = useState(null);
+  const [openHistory, setOpenHistory] = useState(false);
+  const [orderPlaced, setOrderPlaced] = useState(false);
+  const [foodType, setType] = useState(null);
+
+  const toggleMenu = () => {
+    setOpenHistory(!openHistory);
+  };
 
   const AddMenu = (name, data) => {
     const stringifyData = JSON.stringify(data);
     localStorage.setItem(name, stringifyData);
     UpdateFilters(data);
     setItems(data);
-    MenuList = data;
+    setBackup(data);
+    // MenuList = data;
     setLoading(false);
   };
 
-  const fetchRestaurantMenu = async (restaurantName) => {
-    const baseUrl = "http://localhost:3000"; // Replace with your backend base URL
-
-    try {
-      const response = await fetch(
-        `${baseUrl}/restaurants/${restaurantName}/menu`,
-        {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-          },
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error(`Error: ${response.status} ${response.statusText}`);
+  const getMenuData = (name) => {
+    console.log("call");
+    AddMenu(name, MenuItems);
+    return;
+    getMenu(
+      { resturant: name },
+      (response) => {
+        // console.log("res--", JSON.stringify(response));
+        AddMenu(name, response);
+      },
+      (error) => {
+        console.log("error---", error);
       }
-      const menu = await response.json();
-      console.log("menu", JSON.stringify(menu));
-      AddMenu(restaurantName, menu);
-      // setItems(menu);
-      return menu;
-    } catch (error) {
-      console.error("Failed to fetch menu:", error);
-      throw error;
-    }
+    );
   };
 
   const GetMenu = (name, menu) => {
@@ -64,14 +66,16 @@ function App() {
     if (data) {
       console.log("alredyPresnet");
       const ParsedData = JSON.parse(data);
-      MenuList = ParsedData;
+      // MenuList = ParsedData;
+      setBackup(ParsedData);
       setItems(ParsedData);
       UpdateFilters(ParsedData);
       setLoading(false);
     } else {
       localStorage.clear();
       console.log("notPresent");
-      fetchRestaurantMenu(name);
+      getMenuData(name);
+      // fetchRestaurantMenu(name);
     }
   };
 
@@ -90,8 +94,12 @@ function App() {
     const table = searchParams.get("table");
     setDetails({ resturant: resturant, table: table });
     const ordersData = getCartDetails(resturant + table);
+    const orderHistory = getCartDetails(resturant + table + "history");
     if (ordersData) {
       setOrders(ordersData);
+    }
+    if (orderHistory) {
+      setHistory(orderHistory);
     }
     console.log("localLenght-", localStorage.length);
     GetMenu(resturant, MenuItems);
@@ -106,33 +114,35 @@ function App() {
   };
 
   const filterItems = (category) => {
-    console.log("allItems--", JSON.stringify(allItems));
-    const filterMenu = MenuList.filter((item) => item?.category === category);
+    console.log("allItems--", JSON.stringify(backupList));
+    const filterMenu = backupList.filter((item) => item?.category === category);
     if (filterMenu?.length > 0) {
       setItems(filterMenu);
     } else {
-      setItems(MenuList);
+      setItems(backupList);
     }
   };
 
   const searchItems = (query) => {
     const lowerQuery = query.toLowerCase(); // Ensure the query is lowercase for comparison
-    const filterMenu = MenuList.map((menu) => {
-      // Filter items within the category where the item name matches the query
-      const filteredItems = menu.items.filter((item) =>
-        item.name?.toLowerCase().includes(lowerQuery)
-      );
+    const filterMenu = backupList
+      .map((menu) => {
+        // Filter items within the category where the item name matches the query
+        const filteredItems = menu.items.filter((item) =>
+          item.name?.toLowerCase().includes(lowerQuery)
+        );
 
-      // Only return the category if it has matching items or the category name matches the query
-      if (
-        filteredItems.length > 0 ||
-        menu.category?.toLowerCase().includes(lowerQuery)
-      ) {
-        return { ...menu, items: filteredItems }; // Return category with filtered items
-      }
+        // Only return the category if it has matching items or the category name matches the query
+        if (
+          filteredItems.length > 0 ||
+          menu.category?.toLowerCase().includes(lowerQuery)
+        ) {
+          return { ...menu, items: filteredItems }; // Return category with filtered items
+        }
 
-      return null; // Return null if no matching items or category name
-    }).filter((menu) => menu !== null); // Remove any null categories
+        return null; // Return null if no matching items or category name
+      })
+      .filter((menu) => menu !== null); // Remove any null categories
 
     if (filterMenu.length > 0) {
       setItems(filterMenu); // Update state with the filtered menu
@@ -146,6 +156,25 @@ function App() {
       details?.resturant + details?.table,
       JSON.stringify(orders)
     );
+  };
+
+  const saveHistoryLocal = () => {
+    const allHistory = [...history, ...orders];
+    localStorage.setItem(
+      details?.resturant + details?.table + "history",
+      JSON.stringify(allHistory)
+    );
+  };
+
+  const PlaceOrder = () => {
+    setOrderPlaced(true);
+    setTimeout(() => {
+      setOrderPlaced(false);
+    }, 2500);
+    setHistory([...orders, ...history]);
+    saveHistoryLocal();
+    localStorage.removeItem(details?.resturant + details?.table);
+    setOrders([]);
   };
 
   const AddItem = (item) => {
@@ -189,150 +218,13 @@ function App() {
     setSearchText(e.target.value);
   };
 
-  // return (
-  //   <div style={styles.container}>
-  //     {/* Toolbar */}
-  //     <div style={styles.toolbar}>
-  //       <img
-  //         src={require("./assets/images/icons/bill.png")}
-  //         alt="Left Icon"
-  //         style={styles.icon}
-  //         onClick={toggleBottomSheet}
-  //       />
-  //       <div style={styles.title}>
-  //         <span style={styles.titlePart1}>Big</span>
-  //         <span style={styles.titlePart2}>Bistro</span>
-  //       </div>
-  //       <img
-  //         src={require("./assets/images/icons/waiter.png")}
-  //         alt="Right Icon"
-  //         style={styles.icon}
-  //         onClick={storeMenu}
-  //       />
-  //     </div>
-  //     <div style={styles.blankScreen}>
-  //       <SearchView onChange={(e) => searchItems(e?.target?.value)} />
-  //       <FilterView
-  //         list={filters}
-  //         active={activeFilter}
-  //         onPress={(filter) => {
-  //           filterItems(filter);
-  //           setActive(filter);
-  //         }}
-  //       />
-  //       {allItems?.length > 0 &&
-  //         allItems.map((mainItem) => (
-  //           <div>
-  //             <BoldText text={mainItem?.category} />
-  //             <div
-  //               style={{
-  //                 display: "flex",
-  //                 paddingLeft: "2%",
-  //                 marginTop: 5,
-  //                 overflow: "auto",
-  //                 scrollbarWidth: "none",
-  //               }}
-  //             >
-  //               {mainItem?.items.map((item) =>
-  //                 item?.description ? (
-  //                   <OfferPoster item={item} />
-  //                 ) : (
-  //                   <MenuItem
-  //                     ordered={orders.some(
-  //                       (orderItem) => orderItem?.id === item?.id
-  //                     )}
-  //                     src={
-  //                       mainItem?.category === "Burgers"
-  //                         ? require("./assets/images/backgrounds/burger_photo.png")
-  //                         : require("./assets/images/backgrounds/pizza_combo.jpg")
-  //                     }
-  //                     onClick={() => AddItem(item)}
-  //                     add={() => console.log("+")}
-  //                     item={item}
-  //                   />
-  //                 )
-  //               )}
-  //             </div>
-  //           </div>
-  //         ))}
-  //       {/* cart box --------- */}(
-  //       {orders?.length > 0 && (
-  //         <div className="cart-wrapper">
-  //           <div className="cart-box">
-  //             <div className="cart-info">
-  //               <img
-  //                 src={require("./assets/images/icons/order_icon.png")}
-  //                 alt="Pizza Choice"
-  //                 className="cart-image"
-  //               />
-  //               <div className="cart-details">
-  //                 <h4>{`${orders?.length} Items`}</h4>
-  //                 <p className="view-menu">You can add More</p>
-  //               </div>
-  //             </div>
-  //             <div className="cart-actions">
-  //               <button className="view-cart-btn" onClick={togglePopup}>
-  //                 View Order
-  //               </button>
-  //               {/* <p className="item-count">2 items</p> */}
-  //             </div>
-  //           </div>
-  //           <button className="place-order-btn">Place Order</button>
-  //         </div>
-  //       )}
-  //       ){/* Bottom Popup */}
-  //       {isOpen && (
-  //         <div className="popup">
-  //           <div className="popup-header">
-  //             <h2
-  //               style={{
-  //                 fontSize: 16,
-  //                 marginTop: 5,
-  //                 marginBottom: 5,
-  //                 color: AppColors.DARK_GREEN_TEXT,
-  //               }}
-  //             >
-  //               Your Order
-  //             </h2>
-  //             <button className="close-btn" onClick={togglePopup}>
-  //               &times;
-  //             </button>
-  //           </div>
-  //           <div className="popup-content">
-  //             <img
-  //               src={require("./assets/images/backgrounds/art_bg.png")}
-  //               alt="Background"
-  //               style={styles.backgroundImage}
-  //             />
-  //             <BoldText text={"Total Items: 2"} />
-  //             {orders.map((item) => (
-  //               <OrderCell item={item} />
-  //             ))}
-  //             <button
-  //               style={{
-  //                 width: "100%",
-  //                 marginTop: 10,
-  //                 // marginBottom: 5,
-  //               }}
-  //               className="view-cart-btn"
-  //               onClick={togglePopup}
-  //             >
-  //               Place Order
-  //             </button>
-  //           </div>
-  //         </div>
-  //       )}
-  //     </div>
-  //   </div>
-  // );
-  // const [searchText, setSearchText] = useState("");
   const [placeholderText, setPlaceholderText] = useState("Search Pizza");
 
   useEffect(() => {
     console.log("details", details?.resturant + details?.table);
     const placeholderCycle = [
       `Welcome to ${details?.resturant}`,
-      "Search Pizza",
+      "Search Pizza corn",
       "Search Pasta",
     ];
     let index = 0;
@@ -364,9 +256,15 @@ function App() {
           ></img>
           {/* Search icon inside the input */}
         </div>
-        <button className="top-filter-button">
+        <button
+          style={{
+            backgroundColor: history?.length > 0 ? "#009944" : "#D3D3D3",
+          }}
+          className="top-filter-button"
+          onClick={toggleMenu}
+        >
           <img
-            src={require("./assets/images/icons/waiter_outline.png")}
+            src={require("./assets/images/icons/history.png")}
             alt="Icon"
             className="button-icon"
           />
@@ -412,16 +310,17 @@ function App() {
                       (orderItem) => orderItem?.id === item?.id
                     );
 
-                    return item?.description ? (
-                      <OfferPoster
-                        ordered={!!orderDetails}
-                        qty={orderDetails?.qty || 1}
-                        onClick={() => AddItem(item)}
-                        remove={() => removeItem(item)}
-                        add={() => AddItem(item)}
-                        item={item}
-                      />
-                    ) : (
+                    return (
+                      // !item?.description ? (
+                      //   <OfferPoster
+                      //     ordered={!!orderDetails}
+                      //     qty={orderDetails?.qty || 1}
+                      //     onClick={() => AddItem(item)}
+                      //     remove={() => removeItem(item)}
+                      //     add={() => AddItem(item)}
+                      //     item={item}
+                      //   />
+                      // ) : (
                       <MenuItem
                         ordered={!!orderDetails}
                         qty={orderDetails?.qty || 1}
@@ -436,62 +335,160 @@ function App() {
                         item={item}
                       />
                     );
+                    // );
                   })}
                 </div>
               </div>
             ))}
+          {orderPlaced && (
+            <div
+              style={{
+                position: "absolute",
+                flex: 1,
+                backgroundColor: "#fff",
+                height: "100%",
+                width: "100%",
+                top: 0,
+                zIndex: 100,
+              }}
+            >
+              <Lottie animationData={orderPlace} loop={false} />
+              <h5
+                style={{
+                  color: "#004422",
+                  fontSize: 16,
+                  textAlign: "center",
+                  // position: "absolute",
+                  marginTop: -50,
+                }}
+              >
+                Congratulations! your order has been placed
+              </h5>
+            </div>
+          )}
         </section>
       )}
 
-      {/* Top Doctor Section */}
-      {/* <section style={styles.section}>
-        <h4 style={styles.sectionTitle}>
-          Top Doctor <span style={styles.seeAll}>See all</span>
-        </h4>
-        <div style={styles.doctorCard}>
-          <img
-            src={doctors[2].image}
-            alt={doctors[2].name}
-            style={styles.image}
-          />
-          <div style={styles.doctorDetails}>
-            <h5 style={styles.doctorName}>{doctors[2].name}</h5>
-            <p style={styles.doctorSpecialty}>{doctors[2].specialty}</p>
-          </div>
-        </div>
-      </section> */}
-
       {/* Bottom Tab */}
 
-      {orders?.length > 0 && (
+      {(orders?.length > 0 || history?.length > 0) && (
         <div className="cart-wrapper">
-          <div className="cart-box">
-            <div className="cart-info">
-              <img
-                src={require("./assets/images/icons/order_icon.png")}
-                alt="Pizza Choice"
-                className="cart-image"
-              />
-              <div className="cart-details">
-                <h4>{`${orders.reduce(
-                  (total, item) => total + item.qty,
-                  0
-                )} items`}</h4>
-                <p className="view-menu">You can add More</p>
+          {orders?.length > 0 && (
+            <div
+              style={{ margin: "10px 10px", width: "95%" }}
+              className="cart-box"
+            >
+              <div className="cart-info">
+                <img
+                  src={require("./assets/images/icons/order_icon.png")}
+                  alt="Pizza Choice"
+                  className="cart-image"
+                />
+                <div className="cart-details">
+                  <h4>
+                    {`${orders.reduce((total, item) => total + item.qty, 0)}
+                    items`}
+                  </h4>
+                  <div style={{ display: "flex", flexDirection: "row" }}>
+                    <p className="view-menu">Add instructions: </p>
+                    {messages.map((item) => (
+                      <button
+                        style={{
+                          height: 20,
+                          fontSize: 10,
+                          margin: "0px 2px",
+                          borderStyle: "none",
+                          borderRadius: 15,
+                          backgroundColor:
+                            foodType == item
+                              ? AppColors.LIGHT_GREEN_TEXT
+                              : "#e7e7e7",
+                          padding: "0px 5px",
+                          color: foodType == item ? "white" : "gray",
+                        }}
+                        onClick={() => setType(item)}
+                      >
+                        {item}
+                      </button>
+                    ))}
+                  </div>
+                  {/* <p className="view-menu">
+                  {orders?.length != 0
+                    ? "You can add More"
+                    : "We will notify you when order gets ready"}
+                </p> */}
+                </div>
+              </div>
+              <div className="cart-actions">
+                <button className="view-cart-btn" onClick={PlaceOrder}>
+                  {history?.length != 0 ? `Place new order` : `Place order`}
+                </button>
+                <p
+                  style={{ color: AppColors.LIGHT_GREEN_TEXT }}
+                  className="item-count"
+                  onClick={togglePopup}
+                >
+                  {history?.length != 0 ? `View new order` : `View order`}
+                </p>
               </div>
             </div>
-            <div className="cart-actions">
-              <button className="view-cart-btn" onClick={togglePopup}>
-                View Order
-              </button>
-              {/* <p className="item-count">2 items</p> */}
+          )}
+          {/* {orders?.length != 0 && (
+            <button className="place-order-btn" onClick={() => PlaceOrder()}>
+              Place Order
+            </button>
+          )} */}
+          {history?.length > 0 && (
+            <div
+              style={{ boxShadow: "none", borderRadius: 0 }}
+              className="cart-box"
+            >
+              <div className="cart-info">
+                <Lottie
+                  style={{ height: 65, width: 65 }}
+                  animationData={food_prepare}
+                  loop={true}
+                />
+                <div className="cart-details">
+                  <h4>{`Order Preparing..`}</h4>
+                  <p className="view-menu">
+                    {"We will notify you when order gets ready"}
+                  </p>
+                </div>
+              </div>
+              <div className="cart-actions">
+                <button className="view-cart-btn" onClick={toggleMenu}>
+                  {`Order Details`}
+                </button>
+              </div>
             </div>
-          </div>
-          <button className="place-order-btn">Place Order</button>
+          )}
         </div>
       )}
 
-      {isOpen && (
+      {/* place order tab ------------- */}
+      {/* <div className="bottom-box">
+        <div className="bottom-box-content">
+          <img
+            src="https://via.placeholder.com/40"
+            alt="Icon"
+            className="bottom-box-icon"
+          />
+          <div>
+            <h4 className="bottom-box-title">Zomato Money</h4>
+            <p className="bottom-box-subtitle">
+              Single tap payments. Zero failures
+            </p>
+          </div>
+        </div>
+
+        <button className="new-button" onClick={toggleBottomSheet}>
+          NEW
+        </button>
+      </div> */}
+
+      {/* cart bottom sheet ----------- */}
+      {isOpen && orders?.length > 0 && (
         <div className="popup">
           <div className="popup-header">
             <h3 style={{ color: "#000", fontSize: 14 }}>Your order</h3>
@@ -514,10 +511,84 @@ function App() {
                 item={item}
               />
             ))}
-            <button className="place-order-btn">Place Order</button>
+            <button className="place-order-btn" onClick={() => PlaceOrder()}>
+              Place Order
+            </button>
           </div>
         </div>
       )}
+
+      {openHistory && (
+        <div className="popup">
+          <div className="popup-header">
+            <h3 style={{ color: "#000", fontSize: 14 }}>Order details</h3>
+            <button className="close-btn" onClick={toggleMenu}>
+              ×
+            </button>
+          </div>
+          <div className="popup-content">
+            {history.map((item) => (
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "row",
+                  justifyContent: "space-between",
+                  height: 25,
+                }}
+              >
+                <h3 style={{ color: "#000", fontSize: 12 }}>
+                  {item?.qty + " " + item?.name}
+                </h3>
+                <h2 style={{ color: "#000", fontSize: 12 }}>{item?.price}</h2>
+              </div>
+            ))}
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "row",
+                justifyContent: "space-between",
+              }}
+            >
+              <h3 style={{ color: "#000", fontSize: 14 }}>
+                {`Total Items: ${history.reduce(
+                  (total, item) => total + item.qty,
+                  0
+                )} `}
+              </h3>
+              <h2 style={{ color: "#000", fontSize: 12 }}>{`${history.reduce(
+                (total, item) => item.qty * item?.price + total,
+                0
+              )} `}</h2>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* HIstory Model -----side drwaer----- */}
+      {/* {openHistory && (
+        <div className={`side-menu ${isOpen ? "open" : ""}`}>
+          <div className="menu-header">
+            <h2 style={{ fontSize: 20 }} className="menu-title">
+              Order Details
+            </h2>
+            <button onClick={toggleMenu} className="close-button">
+              X
+            </button>
+          </div>
+          {history?.length > 0 ? (
+            <ul>
+              {history.map((item) => (
+                <li>{item?.qty + " " + item?.name}</li>
+              ))}
+            </ul>
+          ) : (
+            <div>
+              <h3>Opps!</h3>
+              <h5>Plaes Order something</h5>
+            </div>
+          )}
+        </div>
+      )} */}
     </div>
   );
 }
@@ -635,7 +706,7 @@ const styles = {
     margin: "0 5px",
   },
   section: {
-    padding: "10px 0",
+    paddingBottom: 150,
     // position: "fixed",
     // overflowY: "auto",
   },
