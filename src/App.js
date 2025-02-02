@@ -378,7 +378,7 @@ function App() {
           className="top-filter-button"
           onClick={() => {
             // getDistanceInMeters(details?.latitude, details?.longitude);
-            alert(fcmToken)
+            alert(fcmToken);
           }}
         >
           <img

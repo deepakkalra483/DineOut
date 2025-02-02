@@ -2,15 +2,14 @@ importScripts("https://www.gstatic.com/firebasejs/8.2.0/firebase-app.js");
 importScripts("https://www.gstatic.com/firebasejs/8.2.0/firebase-messaging.js");
 
 const firebaseConfig = {
-  apiKey: "AIzaSyCbeut2RwySx032SNsZBKls8uDf30LUy7E",
-  authDomain: "finedine-5974a.firebaseapp.com",
-  databaseURL:
-    "https://finedine-5974a-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId: "finedine-5974a",
-  storageBucket: "finedine-5974a.firebasestorage.app",
-  messagingSenderId: "614290644556",
-  appId: "1:614290644556:web:5c29f657cbfd680f81dee9",
-  measurementId: "G-3DD95J64MG",
+  apiKey: process.env.API_Key,
+  authDomain: process.env.AUTH_DOMAIN,
+  databaseURL: process.env.DATABASE_URL,
+  projectId: process.env.PROJECT_ID,
+  storageBucket: process.env.STORAGE_BUCKET,
+  messagingSenderId: process.env.MESSAGING_SENDER_ID,
+  appId: process.env.APP_ID,
+  measurementId: process.env.MESAURMENT_ID,
 };
 
 firebase.initializeApp(firebaseConfig);
