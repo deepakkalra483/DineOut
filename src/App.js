@@ -3,23 +3,34 @@ import OrderCell from "./components/OrderCell";
 import { AppColors } from "./utils/AppColors";
 import { useEffect, useRef, useState } from "react";
 import "./utils/AppCss.css";
-import { MenuItems, specialOffers } from "./utils/StaticArray";
-import { addData, addOrder, clearDatabase, getAllData } from "./utils/IndexDB";
-import NewDesign from "./components/NewDesign";
-import { getCartDetails } from "./utils/LocalStorageHelper";
-import { ref, get } from "firebase/database";
-import { database } from "./utils/Firebase";
-import { getMenu } from "./networking/CallApi";
+import { postNotification } from "./networking/CallApi";
 import Lottie from "lottie-react";
 import orderPlace from "./assets/animations/order_Placed.json";
-import food_prepare from "./assets/animations/food_prepare.json";
+import { messaging } from "./utils/Firebase";
+import {
+  FCM_TOKEN,
+  GetDetails,
+  GetMenu,
+  GetOrder,
+  GetOrderHistory,
+  removeAllExcept,
+  RemoveOrders,
+  setFcmToken,
+  setUserId,
+  StoreMenu,
+  StoreOrder,
+  StoreOrderHistory,
+  StoreResturantDetails,
+  USER_ID,
+} from "./networking/LocalDB";
+import { addOrderToDatabase, fetchResturant } from "./networking/FirebaseDB";
+import { v4 as uuidv4 } from "uuid";
+import { getToken } from "firebase/messaging";
 
-let MenuList = [];
 const messages = ["Spicy", "Medium", "Low"];
 function App() {
   const [isOpen, setIsOpen] = useState(false);
   const [activeFilter, setActive] = useState("All");
-  const [orderList, setOrderList] = useState([]);
   const [allItems, setItems] = useState([]);
   const [backupList, setBackup] = useState([]);
   const [filters, setFilters] = useState(["All"]);
@@ -29,55 +40,82 @@ function App() {
   const [details, setDetails] = useState(null);
   const [openHistory, setOpenHistory] = useState(false);
   const [orderPlaced, setOrderPlaced] = useState(false);
-  const [foodType, setType] = useState(null);
+  const [foodType, setType] = useState("Normal");
+  const [fcmToken, setToken] = useState(false);
 
   const toggleMenu = () => {
     setOpenHistory(!openHistory);
   };
 
-  const AddMenu = (name, data) => {
-    const stringifyData = JSON.stringify(data);
-    localStorage.setItem(name, stringifyData);
-    UpdateFilters(data);
-    setItems(data);
-    setBackup(data);
-    // MenuList = data;
-    setLoading(false);
+  // const uniqueId = uuidv4();
+  // console.log("id---", uniqueId);
+
+  const GetLocation = () => {
+    navigator.geolocation.getCurrentPosition((position) => {
+      const latitude = position?.coords?.latitude;
+      const longitude = position?.coords?.longitude;
+      alert(`let${latitude}+ long${longitude}`);
+    });
+  };
+  const getDistanceInMeters = (lat2, lon2) => {
+    navigator.geolocation.getCurrentPosition((position) => {
+      const lat1 = position?.coords?.latitude;
+      const lon1 = position?.coords?.longitude;
+      const R = 6371000; // Radius of the Earth in meters
+      const dLat = (lat2 - lat1) * (Math.PI / 180);
+      const dLon = (lon2 - lon1) * (Math.PI / 180);
+
+      const a =
+        Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+        Math.cos(lat1 * (Math.PI / 180)) *
+          Math.cos(lat2 * (Math.PI / 180)) *
+          Math.sin(dLon / 2) *
+          Math.sin(dLon / 2);
+
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+      alert(R * c);
+      return R * c; // Distance in meters
+    });
   };
 
-  const getMenuData = (name) => {
-    console.log("call");
-    AddMenu(name, MenuItems);
-    return;
-    getMenu(
-      { resturant: name },
-      (response) => {
-        // console.log("res--", JSON.stringify(response));
-        AddMenu(name, response);
-      },
-      (error) => {
-        console.log("error---", error);
-      }
-    );
-  };
-
-  const GetMenu = (name, menu) => {
-    const data = localStorage.getItem(name);
-    if (data) {
-      console.log("alredyPresnet");
-      const ParsedData = JSON.parse(data);
-      // MenuList = ParsedData;
-      setBackup(ParsedData);
-      setItems(ParsedData);
-      UpdateFilters(ParsedData);
-      setLoading(false);
+  useEffect(() => {
+    // generateToken();
+    const GetToken = async () => {
+      Notification.requestPermission()
+        .then((permission) => {
+          if (permission === "granted") {
+            getToken(messaging, {
+              vapidKey:
+                "BOLjfAf3ejlPXRIH6XMzz4ycm8rRfPQ_xpMbyLGbOwe4iL5-tzJ1VAnjnCra4Fg0gegomI1ClJ8-aqmvbeJbXyQ",
+            })
+              .then((token) => {
+                // alert(token);
+                console.log("token--", token);
+                setToken(token);
+                setFcmToken(token);
+              })
+              .catch((error) => {
+                alert(`tokeneror${error}`);
+                console.log(`tokeneror${error}`);
+              });
+          }
+        })
+        .catch((error) => {
+          alert(`permissionerroe:${error}`);
+        });
+    };
+    const token = localStorage.getItem(FCM_TOKEN);
+    if (!token) {
+      console.log("tokeNo found");
+      GetToken();
     } else {
-      localStorage.clear();
-      console.log("notPresent");
-      getMenuData(name);
-      // fetchRestaurantMenu(name);
+      setToken(token);
+      console.log("tokenfound--", token);
     }
-  };
+
+    // registerWorke();
+    // fetchRestaurant();
+  }, []);
 
   const UpdateFilters = (list) => {
     let categories = ["All"];
@@ -87,23 +125,59 @@ function App() {
     setFilters(categories);
   };
 
+  const UpdateMenu = (Id, table) => {
+    if (Id && table) {
+      const localMenu = GetMenu(Id);
+      if (localMenu?.length == 0) {
+        console.log("notpresent");
+        removeAllExcept();
+        localStorage.clear();
+        const uniqueId = uuidv4();
+        setUserId(uniqueId);
+        fetchResturant(
+          Id,
+          (menu, details) => {
+            setItems(menu);
+            setBackup(menu);
+            StoreMenu(Id, menu);
+            UpdateFilters(menu);
+            setDetails({ ...details, ...{ id: Id, table: table } });
+            StoreResturantDetails(Id, details);
+            setLoading(false);
+          },
+          (error) => {
+            setLoading(false);
+            console.log(error);
+          }
+        );
+      } else {
+        console.log("exsits");
+        setItems(localMenu);
+        setBackup(localMenu);
+        UpdateFilters(localMenu);
+        const details = GetDetails(Id);
+        setDetails({ ...details, ...{ id: Id, table: table } });
+        const orderData = GetOrder(Id);
+        setOrders(orderData);
+        const historydata = GetOrderHistory(Id);
+        setHistory(historydata);
+        setLoading(false);
+      }
+      // console.log("menu--", data);
+    } else {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
     setLoading(true);
+    // GetLocation();
     const searchParams = new URLSearchParams(window.location.search);
-    const resturant = searchParams.get("resturant");
+    const Id = searchParams.get("Id");
     const table = searchParams.get("table");
-    setDetails({ resturant: resturant, table: table });
-    const ordersData = getCartDetails(resturant + table);
-    const orderHistory = getCartDetails(resturant + table + "history");
-    if (ordersData) {
-      setOrders(ordersData);
-    }
-    if (orderHistory) {
-      setHistory(orderHistory);
-    }
-    console.log("localLenght-", localStorage.length);
-    GetMenu(resturant, MenuItems);
-  }, [loading]);
+    console.log("id--", Id + "/ " + table);
+    UpdateMenu(Id, table);
+  }, []);
 
   const togglePopup = () => {
     setIsOpen(!isOpen);
@@ -151,30 +225,75 @@ function App() {
     }
   };
 
-  const saveToLocalStorage = (orders) => {
-    localStorage.setItem(
-      details?.resturant + details?.table,
-      JSON.stringify(orders)
-    );
-  };
-
-  const saveHistoryLocal = () => {
-    const allHistory = [...history, ...orders];
-    localStorage.setItem(
-      details?.resturant + details?.table + "history",
-      JSON.stringify(allHistory)
-    );
+  const getOrderDetails = () => {
+    let data = [];
+    orders.map((item) => {
+      const parms = {
+        qty: item?.qty,
+        name: item?.name,
+      };
+      data.push(parms);
+    });
+    return data;
   };
 
   const PlaceOrder = () => {
     setOrderPlaced(true);
-    setTimeout(() => {
-      setOrderPlaced(false);
-    }, 2500);
-    setHistory([...orders, ...history]);
-    saveHistoryLocal();
-    localStorage.removeItem(details?.resturant + details?.table);
-    setOrders([]);
+    const orderList = getOrderDetails();
+    const userId = localStorage.getItem(USER_ID);
+    const orderDetails = {
+      tableNumber: details?.table,
+      time: Date.now(),
+      items: orderList,
+      message: foodType,
+      token: fcmToken,
+    };
+    const tokenList = details?.tokens
+      .filter((item) => item?.type == "chef" || item?.type == "reception")
+      .map((item) => item?.token);
+
+    const params = {
+      tokens: tokenList,
+      orderDetails: {
+        id: userId,
+        tableNumber: details?.table,
+        time: Date.now().toString(),
+        items: JSON.stringify(orderList),
+        message: foodType,
+      },
+    };
+    postNotification(
+      params,
+      (response) => {
+        if (!orderPlaced) {
+          // alert("notification send");
+        }
+      },
+      (error) => {
+        alert(`noterr--${error}`);
+      }
+    );
+
+    addOrderToDatabase(
+      details?.id,
+      userId,
+      orderDetails,
+      (onSuccess) => {
+        setTimeout(() => {
+          setOrderPlaced(false);
+        }, 2500);
+        setHistory([...orders, ...history]);
+        StoreOrderHistory(details?.id, [...orders, ...history]);
+        RemoveOrders(details?.id);
+        setOrders([]);
+      },
+      (error) => {
+        console.log("error");
+      }
+    );
+    return;
+    // saveHistoryLocal();
+    // localStorage.removeItem(details?.resturant + details?.table);
   };
 
   const AddItem = (item) => {
@@ -185,8 +304,8 @@ function App() {
             order.id === item.id ? { ...order, qty: order.qty + 1 } : order
           )
         : [...prevOrders, { ...item, qty: 1 }];
-
-      saveToLocalStorage(updatedOrders); // Save to localStorage
+      StoreOrder(details?.id, updatedOrders);
+      // saveToLocalStorage(updatedOrders); // Save to localStorage
       return updatedOrders;
     });
   };
@@ -198,8 +317,8 @@ function App() {
           order.id === item.id ? { ...order, qty: order.qty - 1 } : order
         )
         .filter((order) => order.qty > 0); // Remove items with qty <= 0
-
-      saveToLocalStorage(updatedOrders); // Save to localStorage
+      StoreOrder(details?.id, updatedOrders);
+      // saveToLocalStorage(updatedOrders); // Save to localStorage
       return updatedOrders;
     });
   };
@@ -207,23 +326,19 @@ function App() {
   const deleteItem = (item) => {
     setOrders((prevOrders) => {
       const updatedOrders = prevOrders.filter((order) => order.id !== item?.id);
-      saveToLocalStorage(updatedOrders); // Save to localStorage
+      StoreOrder(details?.id, updatedOrders);
+      // saveToLocalStorage(updatedOrders); // Save to localStorage
       return updatedOrders;
     });
   };
 
   const [searchText, setSearchText] = useState("");
 
-  const handleSearchChange = (e) => {
-    setSearchText(e.target.value);
-  };
-
   const [placeholderText, setPlaceholderText] = useState("Search Pizza");
 
   useEffect(() => {
-    console.log("details", details?.resturant + details?.table);
     const placeholderCycle = [
-      `Welcome to ${details?.resturant}`,
+      `Welcome to ${details?.name}`,
       "Search Pizza corn",
       "Search Pasta",
     ];
@@ -261,7 +376,10 @@ function App() {
             backgroundColor: history?.length > 0 ? "#009944" : "#D3D3D3",
           }}
           className="top-filter-button"
-          onClick={toggleMenu}
+          onClick={() => {
+            // getDistanceInMeters(details?.latitude, details?.longitude);
+            alert(fcmToken)
+          }}
         >
           <img
             src={require("./assets/images/icons/history.png")}
@@ -345,25 +463,16 @@ function App() {
               style={{
                 position: "absolute",
                 flex: 1,
-                backgroundColor: "#fff",
+                backgroundColor: "#fafafa",
                 height: "100%",
                 width: "100%",
-                top: 0,
+                top: 50,
                 zIndex: 100,
+                justifyContent: "center",
+                alignItems: "center",
               }}
             >
               <Lottie animationData={orderPlace} loop={false} />
-              <h5
-                style={{
-                  color: "#004422",
-                  fontSize: 16,
-                  textAlign: "center",
-                  // position: "absolute",
-                  marginTop: -50,
-                }}
-              >
-                Congratulations! your order has been placed
-              </h5>
             </div>
           )}
         </section>
@@ -375,10 +484,10 @@ function App() {
         <div className="cart-wrapper">
           {orders?.length > 0 && (
             <div
-              style={{ margin: "10px 10px", width: "95%" }}
+              style={{ margin: "10px 5px", width: "95%" }}
               className="cart-box"
             >
-              <div className="cart-info">
+              <div style={{ marginLeft: "10px" }} className="cart-info">
                 <img
                   src={require("./assets/images/icons/order_icon.png")}
                   alt="Pizza Choice"
@@ -389,14 +498,21 @@ function App() {
                     {`${orders.reduce((total, item) => total + item.qty, 0)}
                     items`}
                   </h4>
-                  <div style={{ display: "flex", flexDirection: "row" }}>
-                    <p className="view-menu">Add instructions: </p>
+                  <div
+                    style={{
+                      display: "flex",
+                      flexDirection: "row",
+                      marginBottom: 10,
+                      marginTop: 5,
+                    }}
+                  >
+                    {/* <p className="view-menu">Add instructions: </p> */}
                     {messages.map((item) => (
                       <button
                         style={{
                           height: 20,
                           fontSize: 10,
-                          margin: "0px 2px",
+                          margin: "0px 3px",
                           borderStyle: "none",
                           borderRadius: 15,
                           backgroundColor:
@@ -444,16 +560,14 @@ function App() {
               className="cart-box"
             >
               <div className="cart-info">
-                <Lottie
+                {/* <Lottie
                   style={{ height: 65, width: 65 }}
                   animationData={food_prepare}
                   loop={true}
-                />
-                <div className="cart-details">
-                  <h4>{`Order Preparing..`}</h4>
-                  <p className="view-menu">
-                    {"We will notify you when order gets ready"}
-                  </p>
+                /> */}
+                <div style={{ paddingLeft: 15 }} className="cart-details">
+                  <h4>{`Order History`}</h4>
+                  <p className="view-menu">{"View all orders"}</p>
                 </div>
               </div>
               <div className="cart-actions">
@@ -810,6 +924,35 @@ const SearchView = (props) => {
   );
 };
 
+const PopUp = (props) => {
+  return (
+    <div
+      style={{
+        backgroundColor: "red",
+        position: "absolute",
+        height: "100%",
+        top: 0,
+        justifyContent: "center",
+        alignItems: "center",
+        zIndex: 100,
+        width: "100%",
+      }}
+    >
+      <div className="confirmation-text">
+        Do you really want to delete this task?
+      </div>
+      <div className="button-container">
+        <button className="cancel-button" onClick={props?.no}>
+          No
+        </button>
+        <button className="confirmation-button" onClick={props?.yes}>
+          Yes
+        </button>
+      </div>
+    </div>
+  );
+};
+
 const FilterView = (props) => {
   const filters = props?.list;
   const active = props?.active;
@@ -835,7 +978,13 @@ const MenuItem = (props) => {
   const ordered = props?.ordered;
   return (
     <div className="menu-card">
-      <img src={props?.src} alt={item?.name} className="menu-image" />
+      <img
+        src={
+          item?.src || require("./assets/images/backgrounds/burger_photo.png")
+        }
+        alt={item?.name}
+        className="menu-image"
+      />
       <div className="menu-info">
         <h3 className="menu-title">{item?.name}</h3>
         <p className="menu-price">Rs. {item?.price}</p>

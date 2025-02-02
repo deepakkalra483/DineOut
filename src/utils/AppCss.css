@@ -177,7 +177,7 @@
   bottom: 0;
   left: 0;
   width: 100%;
-  background: #FAFAFA;
+  background: #fafafa;
   z-index: 10;
   padding: 0px 0;
   display: flex;
@@ -192,7 +192,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0px 15px;
+  padding: 0px 0px;
   border-top: 1px solid #e0e0e0;
   box-shadow: 0px 0px 5px rgba(0, 0, 0, 0.3);
   border-radius: 15px 15px 15px 15px;
@@ -236,16 +236,15 @@
 }
 
 .cart-details h4 {
- margin: 0;
+  margin: 0;
   font-size: 16px;
   font-weight: bold;
   color: #333;
-  
 }
 
 .view-menu {
   margin-top: 0;
-  font-size: 14px;
+  font-size: 10px;
   color: #3b3b3b;
   cursor: pointer;
   display: -webkit-box;
@@ -262,6 +261,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
+  margin-right: 10px;
 }
 
 .view-cart-btn {
@@ -593,8 +593,6 @@ h2 {
   margin-bottom: 20px;
 }
 
-
-
 /* Close button inside the side menu */
 .close-button {
   background-color: #009944;
@@ -618,7 +616,59 @@ h2 {
   z-index: 999;
 }
 
-
-
 /* cart bottom sheet------------ */
 
+/* Pop up--------------------- */
+.popcontainer {
+  display: none;
+  flex-direction: column;
+  position: fixed;
+  background-color: #f37736;
+  width: 230px;
+  top: 75%;
+  left: 50%;
+  transform: translate(-50%, -75%);
+  border-radius: 0.3rem;
+  padding: 1rem;
+  z-index: 5; /* Higher than the z-index of the background */
+}
+
+.confirmation-text {
+  display: flex;
+  color: white;
+  margin: 0.5rem 0 2rem;
+  text-align: center;
+  line-height: 2rem;
+  font-size: 1.1rem;
+}
+
+.button-popcontainer {
+  display: flex;
+  margin-top: auto;
+  justify-content: space-between;
+}
+
+.confirmation-button,
+delete-button {
+  display: inline-flex;
+  background-color: #cc0000;
+  color: white;
+  padding: 0.7rem 1.4rem;
+  border: none;
+  border-radius: 0.3rem;
+  font-size: 1rem;
+}
+
+.cancel-button {
+  background-color: #999999;
+}
+
+.confirmation-button:hover {
+  background-color: red;
+  cursor: pointer;
+}
+
+.cancel-button:hover {
+  background-color: #b2b2b2;
+  cursor: pointer;
+}
