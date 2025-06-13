@@ -1,5 +1,5 @@
 {
-  "homepage": "https://deepakkalra483.github.io/DineOut",
+  "homepage": "./",
   "name": "my-app",
   "version": "0.1.0",
   "private": true,
@@ -7,8 +7,8 @@
     "axios": "^1.7.9",
     "cra-template": "1.2.0",
     "firebase": "^11.2.0",
-    "idb": "^8.0.1",
     "lottie-react": "^2.4.0",
+    "moment": "^2.30.1",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-scripts": "^5.0.1",

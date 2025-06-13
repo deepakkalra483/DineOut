@@ -4,15 +4,27 @@ import { getFirestore } from "firebase/firestore";
 import axios from "axios";
 
 const firebaseConfig = {
-  apiKey: process.env.API_Key,
-  authDomain: process.env.AUTH_DOMAIN,
-  databaseURL: process.env.DATABASE_URL,
-  projectId: process.env.PROJECT_ID,
-  storageBucket: process.env.STORAGE_BUCKET,
-  messagingSenderId: process.env.MESSAGING_SENDER_ID,
-  appId: process.env.APP_ID,
-  measurementId: process.env.MESAURMENT_ID,
+  apiKey: "AIzaSyCbeut2RwySx032SNsZBKls8uDf30LUy7E",
+  authDomain: "finedine-5974a.firebaseapp.com",
+  databaseURL:
+    "https://finedine-5974a-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "finedine-5974a",
+  storageBucket: "finedine-5974a.firebasestorage.app",
+  messagingSenderId: "614290644556",
+  appId: "1:614290644556:web:5c29f657cbfd680f81dee9",
+  measurementId: "G-3DD95J64MG",
 };
+
+// const firebaseConfig = {
+//   apiKey: "AIzaSyCbeut2RwySx032SNsZBKls8uDf30LUy7E",
+//   authDomain: "finedine-5974a.firebaseapp.com",
+//   databaseURL: "https://finedine-5974a-default-rtdb.asia-southeast1.firebasedatabase.app",
+//   projectId: "finedine-5974a",
+//   storageBucket: "finedine-5974a.firebasestorage.app",
+//   messagingSenderId: "614290644556",
+//   appId: "1:614290644556:web:11e1f00e99c8cf9281dee9",
+//   measurementId: "G-T4GJ74K777"
+// };
 
 const firebaseApp = initializeApp(firebaseConfig);
 const messaging = getMessaging(firebaseApp);
@@ -44,26 +56,35 @@ export { db, messaging };
 //     });
 // };
 
-export const generateToken = async () => {
-  try {
-    const permission = await Notification.requestPermission();
-    console.log(permission);
-    if (permission === "granted") {
-      try {
-        const token = await getToken(messaging, {
+export const GenerateToken = async (onLoading, onSuccess, onFailure) => {
+  Notification.requestPermission()
+    .then((permission) => {
+      onLoading(true);
+      if (permission === "granted") {
+        getToken(messaging, {
           vapidKey:
             "BOLjfAf3ejlPXRIH6XMzz4ycm8rRfPQ_xpMbyLGbOwe4iL5-tzJ1VAnjnCra4Fg0gegomI1ClJ8-aqmvbeJbXyQ",
-        });
-        console.log(token);
-        alert(token);
-      } catch (error) {
-        alert(error);
-        console.log("error--", error);
+        })
+          .then((token) => {
+            // alert(token);
+            console.log("token--", token);
+            onLoading(false);
+            onSuccess(token);
+          })
+          .catch((error) => {
+            onLoading(false);
+            onFailure(error);
+            console.log(`tokeneror${error}`);
+          });
+      } else {
+        onLoading(false);
+        onFailure("denied");
       }
-    }
-  } catch (error) {
-    alert(error);
-  }
+    })
+    .catch((error) => {
+      onLoading(false);
+      alert(`permissionerroe:${error}`);
+    });
 };
 
 const FCM_SERVER_KEY = "YOUR_SERVER_KEY"; // From Firebase Console

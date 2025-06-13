@@ -5,6 +5,14 @@ export const getMenu = (params, onSuccess, onFailure) => {
   fetchData(`${GET_MENU}${params?.resturant}/menu`, onSuccess, onFailure);
 };
 
+export const getUserLocation = (params,onSuccess,onFailure) => {
+  fetchData(
+    `https://geolocation-db.com/json/6b556950-ff9e-11ef-8385-8d4ce1b42936`,
+    onSuccess,
+    onFailure
+  );
+};
+
 export const postNotification = (params, onSuccess, onFailure) => {
   console.log("url--", SEND_NOTIFICATION);
   console.log("params-", params?.tokens);
@@ -26,11 +34,11 @@ const placeOrder = async (url, params, onSuccess, onFailure) => {
     if (response.status === 200) {
       console.log("Order placed successfully:", response.data);
       // alert("Order placed successfully!");
-      onSuccess();
+      onSuccess(response);
     } else {
       console.error("Unexpected response:", response.status, response.data);
       alert("Failed to place the order. Please try again.");
-      onFailure();
+      onFailure(response);
     }
   } catch (error) {
     console.error(
@@ -40,7 +48,7 @@ const placeOrder = async (url, params, onSuccess, onFailure) => {
     alert(
       "An error occurred while placing the order. Please check the console for details."
     );
-    onFailure();
+    onFailure(error);
   }
 };
 

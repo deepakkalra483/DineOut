@@ -23,16 +23,22 @@ const OrderCell = (props) => {
 
   return (
     <div style={containerStyle}>
-      <div style={itemStyle}>
-        <img
+      <div
+        style={itemStyle}
+      >
+        {/* <img
           style={imageStyle}
           src={item.src || require("../assets/images/backgrounds/momos.png")}
           alt={item.name}
-        />
+        /> */}
+        <p style={{ fontSize: 8, alignSelf: "flex-start" }}>⏺️</p>
         <div style={detailsStyle}>
-          <p style={nameStyle}>{item.name}</p>
+          <p style={nameStyle}>{item?.qty +'× '+(item?.size ? item?.size + " " : "")+' '+item.name}</p>
           <p style={descriptionStyle}>{item.description}</p>
-          <p style={priceStyle}>RS {item.price}</p>
+          <div style={{ flexDirection: "row", display: "flex", marginTop: 5 }}>
+            <p style={priceStyle}>₹ {item.price}</p>
+            {/* {<p style={sizeStyle}>{item?.size}</p>} */}
+          </div>
         </div>
         <div style={quantityControlsStyle}>
           <button onClick={props?.remove} style={decreaseButtonStyle}>
@@ -56,34 +62,32 @@ const OrderCell = (props) => {
 };
 
 const containerStyle = {
-  backgroundColor: AppColors.LIGHT_BACKGROUND,
+  backgroundColor: "white",
   // padding: "5px",
   position: "relative",
   zIndex: 1,
 };
 
-const itemStyle = {
+const itemStyle ={
   display: "flex",
   alignItems: "center",
-  padding: "10px",
+  padding: "8px",
   backgroundColor: "white",
-  // height: "30px",
   justifyContent: "space-between",
-  borderRadius: "15px",
-  boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
-  marginBottom: 10,
+  borderBottom: "1px solid #e0e0e0",
 };
 
 const imageStyle = {
   height: "100%",
-  width: "9%",
+  width: "10%",
   objectFit: "cover",
   borderRadius: "10px",
+  backgroundColor: "red",
 };
 
 const detailsStyle = {
-  flex: 1,
-  marginLeft: "15px",
+  flex: 0.9,
+  marginLeft: "0px",
   height: "100%",
 };
 
@@ -91,7 +95,7 @@ const nameStyle = {
   color: "black",
   fontSize: "12px",
   margin: "0",
-  fontWeight: "600",
+  fontWeight: "700",
 };
 
 const descriptionStyle = {
@@ -108,6 +112,19 @@ const priceStyle = {
   // fontWeight:"600"
 };
 
+const sizeStyle = {
+  color: AppColors.LIGHT_GREEN_TEXT,
+  fontSize: "12px",
+  margin: 0,
+  marginLeft: 10,
+  // backgroundColor:AppColors.LIGHT_GREEN_TEXT,
+  // borderRadius:5,
+  // paddingInline:7,
+  // paddingTop:2,
+  // paddingBottom:2
+  fontWeight:'bold',
+  fontFamily: "Arial, sans-serif"
+};
 const quantityControlsStyle = {
   display: "flex",
   alignItems: "center",

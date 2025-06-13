@@ -36,3 +36,86 @@
     transform: rotate(360deg);
   }
 }
+
+/* pizza box css------------- */
+
+.today-offer-section {
+  padding-bottom: 0;
+}
+
+.offer-heading {
+  font-size: 18px;
+  font-weight: 700;
+  margin-bottom: 12px;
+  text-align: left;
+  margin-left: -10px;
+}
+
+.offer-card-overlay {
+  position: absolute;
+  bottom: 0;
+  width: 100%;
+  height: 100%;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.1));
+  color: #fff;
+}
+
+.offer-card-overlay h3 {
+  font-size: 16px;
+  margin: 0 0 4px;
+}
+
+.offer-card-overlay p {
+  font-size: 13px;
+  margin: 0 0 8px;
+  line-height: 1.2;
+}
+
+.offer-add-button {
+  background-color: #28a745;
+  width: 90%;
+  border: none;
+  border-radius: 6px;
+  color: white;
+  padding: 6px 14px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.offer-add-button:hover {
+  background-color: #28a745;
+}
+
+.offer-scroll-container {
+  display: flex;
+  gap: 16px;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  padding-bottom: 15px;
+  -webkit-overflow-scrolling: touch;
+  justify-content: flex-start;
+  scroll-padding-left: 10%; /* to keep the first card in center */
+}
+
+.offer-scroll-container::-webkit-scrollbar {
+  display: none;
+}
+
+.offer-card-image {
+  flex: 0 0 95%; /* 80% of container width */
+  margin: 0 auto;
+  height: 180px;
+  border-radius: 12px;
+  background-size: cover;
+  background-repeat: no-repeat;
+  background-position: center;
+  position: relative;
+  scroll-snap-align: center;
+  overflow: hidden;
+  /* box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15); */
+}
