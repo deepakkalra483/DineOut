@@ -35,7 +35,7 @@ const CartView = ({
               : `Are you sure you want to place this order?`
           }
           leftPress={() => setOpen("sheet")}
-          rightPress={!loading ? () => placeOrder(foodType,details) : null}
+          rightPress={!loading ? () => placeOrder(foodType, details) : null}
           // onPress={StoreToken}
           leftText={"No"}
           RightText={"Yes"}
@@ -238,9 +238,11 @@ const PopupForm = ({ isOpen, onClose, onSave }) => {
         />
         <input
           className="popup-input"
-          type="text"
+          type="number"
           placeholder="Enter your mobile number"
           value={mobile}
+          maxLength={10}
+          autoComplete="tel"
           onChange={(e) => setMobile(e.target.value)}
         />
         <div className="popup-buttons">

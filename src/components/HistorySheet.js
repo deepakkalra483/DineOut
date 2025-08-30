@@ -1,6 +1,12 @@
 import "../cssFiles/History.css";
+import { GetDetails } from "../networking/LocalDB";
 
-const HistorySheet = ({ onClose, orderHistory }) => {
+const HistorySheet = ({ onClose, orderHistory, Id }) => {
+  const details = GetDetails(Id);
+  const totalAmount = orderHistory.reduce(
+    (total, item) => total + item.qty * item.price,
+    0
+  );
   return (
     <div>
       {/* Order History Sliding Sheet */}
@@ -8,7 +14,7 @@ const HistorySheet = ({ onClose, orderHistory }) => {
         <button className="close-btn" onClick={onClose}>
           &times;
         </button>
-        <h2>Order History</h2>
+        <h2>{`Order History`}</h2>
 
         {/* Order List */}
         {orderHistory?.length > 0 ? (
@@ -24,6 +30,48 @@ const HistorySheet = ({ onClose, orderHistory }) => {
                 <span className="item-price">₹{item.price}</span>
               </li>
             ))}
+            <li
+              className="order-total"
+              style={{ marginTop: "10px", fontWeight: "bold" }}
+            >
+              Total: ₹{totalAmount}
+            </li>
+            {details?.upi && (
+              <li>
+                <button
+                  style={{
+                    marginTop: "10px",
+                    padding: "10px 15px",
+                    backgroundColor: "#0f9d58",
+                    color: "white",
+                    border: "none",
+                    borderRadius: "5px",
+                    cursor: "pointer",
+                  }}
+                  onClick={() => {
+                    const upiId = "9876543210@paytm"; // Your UPI ID
+                    const name = "My Shop";
+                    const note = "Order Payment";
+                    const link = `upi://pay?pa=${
+                      details?.upi
+                    }&pn=${encodeURIComponent(
+                      name
+                    )}&am=${totalAmount}&tn=${encodeURIComponent(note)}&cu=INR`;
+
+                    // Detect mobile before opening
+                    if (/Android|iPhone/i.test(navigator.userAgent)) {
+                      window.location.href = link;
+                    } else {
+                      alert(
+                        "Please open this page on your phone with Google Pay installed."
+                      );
+                    }
+                  }}
+                >
+                  Pay with Google Pay
+                </button>
+              </li>
+            )}
           </ul>
         ) : (
           <div

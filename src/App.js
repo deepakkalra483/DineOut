@@ -734,7 +734,11 @@ function App() {
         />
       )}
       {isOpen && (
-        <HistorySheet orderHistory={history} onClose={toggleHistorySheet} />
+        <HistorySheet
+          orderHistory={history}
+          Id={details?.id}
+          onClose={toggleHistorySheet}
+        />
       )}
     </div>
   );
