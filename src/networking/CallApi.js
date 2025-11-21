@@ -5,7 +5,7 @@ export const getMenu = (params, onSuccess, onFailure) => {
   fetchData(`${GET_MENU}${params?.resturant}/menu`, onSuccess, onFailure);
 };
 
-export const getUserLocation = (params,onSuccess,onFailure) => {
+export const getUserLocation = (params, onSuccess, onFailure) => {
   fetchData(
     `https://geolocation-db.com/json/6b556950-ff9e-11ef-8385-8d4ce1b42936`,
     onSuccess,
@@ -97,5 +97,21 @@ async function fetchData(url, onSuccess, onFailure) {
   } catch (error) {
     console.error("Error fetching data:", error);
     onFailure(error);
+  }
+}
+
+export async function awakeServer() {
+  try {
+    const response = await fetch(
+      `https://notificationapi-zwf4.onrender.com/ping`
+    );
+    if (!response.ok) {
+      throw new Error(`HTTP error! Status: ${response.status}`);
+    }
+    const data = await response.text();
+    // alert(data);
+  } catch (error) {
+    alert(error);
+    // alert("Server Down");
   }
 }

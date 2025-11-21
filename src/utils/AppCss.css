@@ -736,11 +736,21 @@ body {
 .list-item {
   padding: 0px;
   border-radius: 5px;
+  font-size: 12px;
+  /* padding-bottom: 10px; */
 }
 
 .list-item h3 {
+  margin: 5px 0px; /* Reduce space around category text */
+  font-size: 16px; /* Adjust size if needed */
+  font-weight: bold;
+  color: #000;
+  /* margin-bottom: 5px; */
+}
+
+.list-item h2 {
   margin: 0px 0px; /* Reduce space around category text */
-  font-size: 18px; /* Adjust size if needed */
+  font-size: 12px; /* Adjust size if needed */
   font-weight: bold;
 }
 
@@ -753,8 +763,10 @@ body {
   white-space: nowrap;
   scrollbar-width: none; /* Hide scrollbar in Firefox */
   -ms-overflow-style: none;
-  padding: 12px 0;
+  padding-bottom: 8px 0;
   /* Hide scrollbar in IE/Edge */
+  padding-bottom: 5px;
+  padding-top: 5px;
 }
 
 /* Hide scrollbar in Webkit browsers */

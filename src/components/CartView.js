@@ -238,12 +238,16 @@ const PopupForm = ({ isOpen, onClose, onSave }) => {
         />
         <input
           className="popup-input"
-          type="number"
+          type="tel" // 👈 use tel, not number
+          name="phone" // 👈 important for autocomplete
           placeholder="Enter your mobile number"
           value={mobile}
           maxLength={10}
-          autoComplete="tel"
-          onChange={(e) => setMobile(e.target.value)}
+          autoComplete="tel" // 👈 enables Google/Chrome saved numbers
+          onChange={(e) => {
+            const onlyNums = e.target.value.replace(/[^0-9]/g, "");
+            setMobile(onlyNums);
+          }}
         />
         <div className="popup-buttons">
           <button className="popup-button cancel" onClick={handleCancel}>

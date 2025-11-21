@@ -1,3 +1,20 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+:root {
+  --color-primary: #416954;
+  --color-surface: #FFFFFF;
+  --color-background: #F8F8F8;
+  --color-divider: #CFCFCF;
+  --text-primary: #416954;
+  --text-secondary: rgba(130, 130, 130, 0.91);
+  --text-placeholder: rgba(130, 130, 130, 0.74);
+}
+
+html, body, #root {
+  font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+  background-color: var(--color-background);
+  color: var(--text-primary);
+}
 body {
   margin: 0;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',

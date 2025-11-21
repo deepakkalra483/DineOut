@@ -2,7 +2,7 @@ import "./App.css";
 import { AppColors } from "./utils/AppColors";
 import { useEffect, useRef, useState } from "react";
 import "./utils/AppCss.css";
-import { postNotification } from "./networking/CallApi";
+import { awakeServer, postNotification } from "./networking/CallApi";
 import Lottie from "lottie-react";
 import orderPlace from "./assets/animations/order_Placed.json";
 import { GenerateToken } from "./utils/Firebase";
@@ -33,6 +33,9 @@ import CartView from "./components/CartView";
 import HistorySheet from "./components/HistorySheet";
 import n5 from "./assets/sounds/order_ready.mp3";
 import moment from "moment";
+import HomePage from "./pages/HomePage";
+import HorizontalItem from "./components/HorizontalItem";
+import OfferCell from "./components/OfferCell";
 
 const offers = [
   {
@@ -69,14 +72,16 @@ function App() {
   const [showPopup, setShowPopUp] = useState(null);
   const [notificationLoad, setNotificationLoad] = useState(false);
   const [userDeatils, setUserDeatils] = useState(null);
+  const [searchTerm, setSearchTerm] = useState("");
 
   useEffect(() => {
-    const channel = new BroadcastChannel("order_ready");
-    channel.onmessage = function (event) {
-      let sound = new Audio(n5);
-      sound.play();
-      // showNotification(event.data.key);
-    };
+    // const channel = new BroadcastChannel("order_ready");
+    // channel.onmessage = function (event) {
+    //   let sound = new Audio(n5);
+    //   sound.play();
+    //   // showNotification(event.data.key);
+    // };
+    awakeServer();
   }, []);
 
   const showNotification = (body) => {
@@ -308,6 +313,7 @@ function App() {
   };
 
   const searchItems = (query) => {
+    setSearchTerm(query);
     const lowerQuery = query.toLowerCase();
 
     const filterMenu = backupList
@@ -342,7 +348,8 @@ function App() {
     orders.map((item) => {
       const parms = {
         quantity: item?.qty,
-        name: item?.size + " " + item?.name,
+        name: item?.size || "" + " " + item?.name,
+        price: item?.price,
         // size: item?.size == undefined ? "" : item?.size,
       };
       data.push(parms);
@@ -534,6 +541,9 @@ function App() {
 
   const [placeholderText, setPlaceholderText] = useState("Search Pizza");
 
+  // return(
+  //   <HomePage />
+  // )
   return (
     <div className="main-container">
       {/* Fixed Search Bar */}
@@ -544,24 +554,36 @@ function App() {
           placeholder={`Search in ${details?.name}`}
           onChange={(e) => searchItems(e?.target?.value)}
         />
-        {fcmToken ? (
+
+        {/* <img
+          style={{
+            height: 35,
+            width: 35,
+            marginLeft: 10,
+          }}
+          src={require("./assets/images/icons/call.png")}
+        /> */}
+
+        <div
+          style={{
+            width: 45,
+            alignItems: "center",
+            marginLeft: 10,
+            justifyContent: "center",
+            display: "flex",
+          }}
+          onClick={() => (window.location.href = `tel:+91${details?.contact}`)}
+          // onClick={()=> alert(`vksvldsn${details?.contact}`)}
+        >
           <img
             style={{
-              height: 35,
-              width: 35,
-              marginLeft: 10,
+              height: 30,
+              width: 30,
             }}
-            src={
-              fcmToken == "not"
-                ? require("./assets/images/icons/not_avl.png")
-                : fcmToken == "disable"
-                ? require("./assets/images/icons/notification.png")
-                : require("./assets/images/icons/notification_enable.png")
-            }
+            src={require("./assets/images/icons/call.png")}
           />
-        ) : (
-          <></>
-        )}
+        </div>
+
         <div
           style={{
             width: 45,
@@ -614,7 +636,7 @@ function App() {
 
       {/* Scrollable Vertical List */}
       <div
-        style={{ height: orders?.length > 0 ? "88%" : "98%" }}
+        style={{ height: orders?.length > 0 ? "85%" : "98%" }}
         className="vertical-list"
       >
         <div className="categories">
@@ -627,14 +649,19 @@ function App() {
             }}
           />
         </div>
-        <OfferModal
-          offers={offers}
-          orders={orders}
-          onClick={(item, data) => {
-            AddItem(item, data);
-          }}
-          ordered={true}
-        />
+        {activeFilter == "All" && searchTerm == "" && (
+          <OfferModal
+            offers={offers}
+            orders={orders}
+            onClick={(item, data) => {
+              AddItem(item, data);
+            }}
+            ordered={true}
+            remove={(item, data) => {
+              removeItem(item, data);
+            }}
+          />
+        )}
         {allItems.length == 0 && loading ? (
           <Spinner />
         ) : allItems.length > 0 ? (
@@ -644,12 +671,15 @@ function App() {
               {/* Horizontal Scroll List */}
               <div className="horizontal-list">
                 {mainItem?.items?.map((item) => {
-                  const single = typeof item?.price == "string";
-                  const orderDetails = single
-                    ? orders.find((orderItem) => orderItem?.id === item?.id)
-                    : orders.filter((orderItem) => orderItem?.id === item?.id);
-                  return !single ? (
-                    <MultipriceItem
+                  const single = item?.price?.length == 1;
+                  // const orderDetails = single
+                  //   ? orders.find((orderItem) => orderItem?.id === item?.id)
+                  //   : orders.filter((orderItem) => orderItem?.id === item?.id);
+                  const orderDetails = orders.filter(
+                    (orderItem) => orderItem?.id === item?.id
+                  );
+                  return single ? (
+                    <HorizontalItem
                       sizes={item?.price}
                       ordered={orderDetails}
                       qty={orderDetails?.qty || 1}
@@ -659,14 +689,24 @@ function App() {
                       item={item}
                     />
                   ) : (
-                    <MenuItem
-                      ordered={!!orderDetails}
+                    <HorizontalItem
+                      sizes={item?.price}
+                      ordered={orderDetails}
                       qty={orderDetails?.qty || 1}
-                      onClick={() => AddItem(item)}
-                      remove={() => removeItem(item)}
-                      add={() => AddItem(item)}
+                      onClick={(data) => AddItem(item, data)}
+                      remove={(data) => removeItem(item, data)}
+                      add={(data) => AddItem(item, data)}
                       item={item}
                     />
+                    // <MultipriceItem
+                    //   sizes={item?.price}
+                    //   ordered={orderDetails}
+                    //   qty={orderDetails?.qty || 1}
+                    //   onClick={(data) => AddItem(item, data)}
+                    //   remove={(data) => removeItem(item, data)}
+                    //   add={(data) => AddItem(item, data)}
+                    //   item={item}
+                    // />
                   );
                 })}
               </div>
@@ -1006,7 +1046,7 @@ export const AddButton = (props) => {
   );
 };
 
-const OfferModal = ({ offers, onClick, orders }) => {
+const OfferModal = ({ offers, onClick, orders, remove, add }) => {
   const activeOffers = offers.filter(isOfferActive);
   console.log("active---", activeOffers);
   if (activeOffers.length === 0) return null;
@@ -1038,34 +1078,79 @@ const OfferModal = ({ offers, onClick, orders }) => {
 
   return (
     <div className="today-offer-section">
-      <h2 className="offer-heading">Today's Offer</h2>
+      <h3 style={{ color: "black" }}>{`Today's Offer`}</h3>
       <div className="offer-scroll-container">
         {activeOffers.map((offer) => {
           const ordered = orders.find(
             (orderItem) => orderItem?.id === offer?.id
           );
           return (
-            <div
-              key={offer.id}
-              className="offer-card-image"
-              style={{ backgroundImage: `url(${offer.src})` }}
-            >
-              <div className="offer-card-overlay">
-                <h3>{offer.name}</h3>
-                <p>{offer.description}</p>
-                {offer?.price && offer?.price?.length > 0 && (
-                  <button
-                    className="offer-add-button"
-                    onClick={() => onClick(offer, offer?.price[0])}
-                  >
-                    {!ordered
-                      ? `Add ₹ ${offer?.price[0]?.price}`
-                      : `${ordered?.qty} is Added`}
-                  </button>
-                )}
-              </div>
-            </div>
+            <OfferCell
+              offer={offer}
+              ordered={ordered}
+              onClick={() => onClick(offer, offer?.price[0])}
+              add={() => onClick(offer, offer?.price[0])}
+              remove={() => remove(offer, offer?.price[0])}
+            />
           );
+          // return (
+          //   <div
+          //     key={offer.id}
+          //     className="offer-card-image"
+          //     style={{ backgroundImage: `url(${offer.src})` }}
+          //   >
+          //     <div className="offer-card-overlay">
+          //       <h3>{offer.name}</h3>
+          //       <p>{offer.description}</p>
+          //       {/* {offer?.price && offer?.price?.length > 0 && (
+          //         <button
+          //           className="offer-add-button"
+          //           onClick={() => onClick(offer, offer?.price[0])}
+          //         >
+          //           {!ordered
+          //             ? `Add ₹ ${offer?.price[0]?.price}`
+          //             : `${ordered?.qty} is Added`}
+          //         </button>
+          //       )} */}
+          //       {ordered ? (
+          //         <div style={{}} className="quantity-controls">
+          //           <button
+          //             // style={{
+          //             //   // padding: 2,
+          //             //   paddingInline: 7,
+          //             //   backgroundColor: "rgba(0, 68, 34, 0.3)",
+          //             //   color: "black",
+          //             //   borderWidth: 0.5,
+          //             // }}
+          //             onClick={() => remove(offer, offer?.price[0])}
+          //           >
+          //             -
+          //           </button>
+          //           <span
+          //             style={{
+          //               color: AppColors.WHITE_TEXT,
+          //               marginInline: 7,
+          //             }}
+          //           >
+          //             {ordered?.qty || 1}
+          //           </span>
+          //           <button onClick={() => onClick(offer, offer?.price[0])}>
+          //             +
+          //           </button>
+          //         </div>
+          //       ) : (
+          //         <button
+          //           className="offer-add-button"
+          //           onClick={() => onClick(offer, offer?.price[0])}
+          //         >
+          //           {!ordered
+          //             ? `Add ₹ ${offer?.price[0]?.price}`
+          //             : `${ordered?.qty} is Added`}
+          //         </button>
+          //       )}
+          //     </div>
+          //   </div>
+          // );
         })}
       </div>
     </div>

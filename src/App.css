@@ -77,7 +77,7 @@
 
 .offer-add-button {
   background-color: #28a745;
-  width: 90%;
+  width: 30%;
   border: none;
   border-radius: 6px;
   color: white;
@@ -109,7 +109,7 @@
 .offer-card-image {
   flex: 0 0 95%; /* 80% of container width */
   margin: 0 auto;
-  height: 180px;
+  height: 150px;
   border-radius: 12px;
   background-size: cover;
   background-repeat: no-repeat;

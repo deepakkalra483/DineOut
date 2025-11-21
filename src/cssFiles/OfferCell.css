@@ -1,0 +1,67 @@
+.offer_cell {
+  display: flex;
+  flex: 0 0 40%;
+  background-color: white;
+  border-radius: 15px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  margin-top: 30px;
+  flex-direction: column;
+  align-items: center;
+  padding-bottom: 5px;
+}
+
+.offer_img_cell {
+  width: 90px;
+  height: 80px;
+  /* background-color: red; */
+  transform: translateY(-30px);
+  border-radius: 50%;
+  overflow: hidden;
+  /* box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); */
+}
+
+.offer_img {
+  height: 100%;
+  width: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+  /* box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); */
+}
+
+.offer_content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  margin-top: -25px;
+  padding: 0 7px;
+  height: 63%;
+}
+
+.name_label {
+  font-size: 12px;
+  font-weight: bold;
+  color: black;
+  display: -webkit-box; /* ✅ required for line clamp */
+  -webkit-line-clamp: 2; /* ✅ max 2 lines */
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: normal;
+}
+
+.description_label {
+  font-size: 10px;
+  margin: 3px 0;
+  color: gray;
+  display: -webkit-box; /* ✅ required for line clamp */
+  -webkit-line-clamp: 2; /* ✅ max 2 lines */
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: normal;
+}
+
+.button_cont {
+  margin-top: auto;
+}

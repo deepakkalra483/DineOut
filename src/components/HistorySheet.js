@@ -7,6 +7,30 @@ const HistorySheet = ({ onClose, orderHistory, Id }) => {
     (total, item) => total + item.qty * item.price,
     0
   );
+
+  const handleUPIPayment = () => {
+    const name = "My Shop";
+    const note = "Order Payment";
+    const baseParams = `pa=${details?.upi}&pn=${encodeURIComponent(
+      name
+    )}&am=${totalAmount}&tn=${encodeURIComponent(note)}&cu=INR`;
+
+    // Android (works with all UPI apps)
+    if (/Android/i.test(navigator.userAgent)) {
+      const link = `upi://pay?${baseParams}`;
+      window.location.href = link;
+    }
+    // iOS (only Google Pay)
+    else if (/iPhone|iPad/i.test(navigator.userAgent)) {
+      const gpayLink = `gpay://upi/pay?${baseParams}`;
+      window.location.href = gpayLink;
+    }
+    // Desktop fallback
+    else {
+      alert("Please open this page on your phone with Google Pay installed.");
+    }
+  };
+
   return (
     <div>
       {/* Order History Sliding Sheet */}
@@ -48,25 +72,26 @@ const HistorySheet = ({ onClose, orderHistory, Id }) => {
                     borderRadius: "5px",
                     cursor: "pointer",
                   }}
-                  onClick={() => {
-                    const upiId = "9876543210@paytm"; // Your UPI ID
-                    const name = "My Shop";
-                    const note = "Order Payment";
-                    const link = `upi://pay?pa=${
-                      details?.upi
-                    }&pn=${encodeURIComponent(
-                      name
-                    )}&am=${totalAmount}&tn=${encodeURIComponent(note)}&cu=INR`;
+                  onClick={handleUPIPayment}
+                  // onClick={() => {
+                  //   const upiId = "9876543210@paytm"; // Your UPI ID
+                  //   const name = "My Shop";
+                  //   const note = "Order Payment";
+                  //   const link = `upi://pay?pa=${
+                  //     details?.upi
+                  //   }&pn=${encodeURIComponent(
+                  //     name
+                  //   )}&am=${totalAmount}&tn=${encodeURIComponent(note)}&cu=INR`;
 
-                    // Detect mobile before opening
-                    if (/Android|iPhone/i.test(navigator.userAgent)) {
-                      window.location.href = link;
-                    } else {
-                      alert(
-                        "Please open this page on your phone with Google Pay installed."
-                      );
-                    }
-                  }}
+                  //   // Detect mobile before opening
+                  //   if (/Android|iPhone/i.test(navigator.userAgent)) {
+                  //     window.location.href = link;
+                  //   } else {
+                  //     alert(
+                  //       "Please open this page on your phone with Google Pay installed."
+                  //     );
+                  //   }
+                  // }}
                 >
                   Pay with Google Pay
                 </button>

@@ -1,0 +1,12 @@
+.itemContainer {
+  background-color: white;
+  border-radius: 8px;
+  border-color: red;
+  border-width: 1cap;
+}
+
+.foodImg {
+  height: 12vh;
+  width: 12vh;
+  border-radius: 8px;
+}
